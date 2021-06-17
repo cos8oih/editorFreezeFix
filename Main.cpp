@@ -20,15 +20,23 @@ static bool writeMemory(
 	std::uintptr_t const address,
 	std::vector<std::uint8_t> const& bytes)
 {
-	DWORD p;
-	VirtualProtect(reinterpret_cast<LPVOID>(address), bytes.size(), PAGE_EXECUTE_READWRITE, &p);
+	DWORD p = 0;
+	
+    if (::VirtualProtect(
+        reinterpret_cast<LPVOID>(address),
+        bytes.size(),
+        PAGE_EXECUTE_READWRITE,
+        &p) == TRUE)
+        {
+            return ::WriteProcessMemory(
+                ::GetCurrentProcess(),
+		        reinterpret_cast<LPVOID>(address),
+		        bytes.data(),
+		        bytes.size(),
+		        NULL) == TRUE;
+        }
 
-	return ::WriteProcessMemory(
-		::GetCurrentProcess(),
-		reinterpret_cast<LPVOID>(address),
-		bytes.data(),
-		bytes.size(),
-		NULL) == TRUE;
+    return false;
 }
 
 static bool writePtr(
